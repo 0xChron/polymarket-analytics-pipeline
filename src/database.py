@@ -114,15 +114,19 @@ class Database:
                 featured = EXCLUDED.featured,
                 liquidity = EXCLUDED.liquidity,
                 fetch_date = EXCLUDED.fetch_date
-            WHERE (events.volume24hr, events.volume1wk, events.volume1mo, events.volume1yr, 
-                   events.volume, events.new, events.featured, events.liquidity) 
-                IS DISTINCT FROM 
-                  (EXCLUDED.volume24hr, EXCLUDED.volume1wk, EXCLUDED.volume1mo, EXCLUDED.volume1yr, 
-                   EXCLUDED.volume, EXCLUDED.new, EXCLUDED.featured, EXCLUDED.liquidity)
         '''
         
         try:
             with self.conn.cursor() as cursor:
+
+                event_ids = [event[0] for event in events_data]
+                if event_ids:
+                    placeholders = ','.join(['%s'] * len(event_ids))
+                    cursor.execute(f"DELETE FROM events WHERE event_id NOT IN ({placeholders})", event_ids)
+                    deleted = cursor.rowcount
+                    if deleted > 0:
+                        logger.info(f"deleted {deleted} closed/inactive events")
+
                 execute_values(cursor, sql, events_data, page_size=1000)
                 self.conn.commit()
                 logger.info(f"inserted/updated {len(events_data)} events.")
@@ -172,21 +176,18 @@ class Database:
                 one_month_price_change = EXCLUDED.one_month_price_change,
                 last_trade_price = EXCLUDED.last_trade_price,
                 fetch_date = EXCLUDED.fetch_date
-            WHERE (markets.liquidity, markets.volume24hr, markets.volume1wk, markets.volume1mo,
-                   markets.volume1yr, markets.volume, markets.new, markets.featured,
-                   markets.outcome_yes_price, markets.outcome_no_price, markets.one_day_price_change,
-                   markets.one_hour_price_change, markets.one_week_price_change, markets.one_month_price_change,
-                   markets.last_trade_price)
-                IS DISTINCT FROM
-                  (EXCLUDED.liquidity, EXCLUDED.volume24hr, EXCLUDED.volume1wk, EXCLUDED.volume1mo,
-                   EXCLUDED.volume1yr, EXCLUDED.volume, EXCLUDED.new, EXCLUDED.featured,
-                   EXCLUDED.outcome_yes_price, EXCLUDED.outcome_no_price, EXCLUDED.one_day_price_change,
-                   EXCLUDED.one_hour_price_change, EXCLUDED.one_week_price_change, EXCLUDED.one_month_price_change,
-                   EXCLUDED.last_trade_price)
         '''
         
         try:
             with self.conn.cursor() as cursor:
+                market_ids = [market[0] for market in markets_data]
+                if market_ids:
+                    placeholders = ','.join(['%s'] * len(market_ids))
+                    cursor.execute(f"DELETE FROM markets WHERE market_id NOT IN ({placeholders})", market_ids)
+                    deleted = cursor.rowcount
+                    if deleted > 0:
+                        logger.info(f"deleted {deleted} closed/inactive markets")
+
                 execute_values(cursor, sql, markets_data, page_size=1000)
                 self.conn.commit()
                 logger.info(f"inserted/updated {len(markets_data)} markets.")
