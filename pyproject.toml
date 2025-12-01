@@ -1,7 +1,7 @@
 [project]
-name = "polymarket"
+name = "polydash-etl"
 version = "0.1.0"
-description = "Add your description here"
+description = "etl for polydash app"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

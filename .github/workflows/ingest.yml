@@ -1,4 +1,4 @@
-name: polymarket screener data ingestion
+name: polydash-etl
 
 on:
   schedule:
