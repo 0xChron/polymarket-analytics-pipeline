@@ -26,21 +26,15 @@ class Database:
                     event_id TEXT PRIMARY KEY,
                     slug TEXT,
                     title TEXT,
-                    start_date TIMESTAMP WITH TIME ZONE,
+                    description TEXT,
                     end_date TIMESTAMP WITH TIME ZONE,
-                    volume24hr NUMERIC,
-                    volume1wk NUMERIC,
-                    volume1mo NUMERIC,
-                    volume1yr NUMERIC,
-                    volume NUMERIC,
                     image TEXT,
                     new BOOLEAN,
-                    featured BOOLEAN,
                     liquidity NUMERIC,
-                    negRisk BOOLEAN,
-                    labels jsonb,
-                    slugs jsonb,
-                    fetch_date DATE
+                    volume NUMERIC,
+                    volume24hr NUMERIC,
+                    categories jsonb,
+                    fetch_date TIMESTAMP WITH TIME ZONE
                 )
             ''')
             logger.info("table 'events' created.")
@@ -48,42 +42,30 @@ class Database:
             # events indexes
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_events_fetch_date ON events(fetch_date)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_events_volume24hr ON events(volume24hr DESC) WHERE volume24hr > 0')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_events_featured ON events(featured) WHERE featured = true')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_events_labels ON events USING GIN(labels)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_events_categories ON events USING GIN(categories)')
             logger.info("indexes for 'events' created.")
             
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS markets (
-                    market_id TEXT PRIMARY KEY,
-                    slug TEXT,
-                    title TEXT,
-                    end_date TIMESTAMP WITH TIME ZONE,
-                    liquidity NUMERIC,
-                    start_date TIMESTAMP WITH TIME ZONE,
-                    image TEXT,
-                    outcome_yes TEXT,
-                    outcome_no TEXT,
-                    volume24hr NUMERIC,
-                    volume1wk NUMERIC,
-                    volume1mo NUMERIC,
-                    volume1yr NUMERIC,
-                    volume NUMERIC,
-                    new BOOLEAN,
-                    featured BOOLEAN,
-                    neg_risk BOOLEAN,
-                    outcome_yes_price NUMERIC,
-                    outcome_no_price NUMERIC,
-                    one_day_price_change NUMERIC,
-                    one_hour_price_change NUMERIC,
-                    one_week_price_change NUMERIC,
-                    one_month_price_change NUMERIC,
-                    last_trade_price NUMERIC,
-                    fetch_date DATE
+                market_id TEXT PRIMARY KEY,
+                event_id TEXT REFERENCES events(event_id) ON DELETE CASCADE,
+                slug TEXT,
+                question TEXT,
+                group_item_title TEXT,
+                new BOOLEAN,
+                liquidity NUMERIC,
+                volume NUMERIC,
+                volume24hr NUMERIC,
+                outcome_yes_price NUMERIC,
+                outcome_no_price NUMERIC,
+                one_day_price_change NUMERIC,
+                fetch_date TIMESTAMP WITH TIME ZONE
                 )
             ''')
             logger.info("table 'markets' created.")
             
             # markets indexes
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_markets_event_id ON markets(event_id)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_markets_fetch_date ON markets(fetch_date)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_markets_volume24hr ON markets(volume24hr DESC) WHERE volume24hr > 0')
             logger.info("indexes for 'markets' created.")
@@ -97,22 +79,22 @@ class Database:
         
         sql = '''
             INSERT INTO events
-                (event_id, slug, title, start_date,
-                end_date, volume24hr, volume1wk, volume1mo,
-                volume1yr, volume, image, new, 
-                featured, liquidity, negRisk, labels, 
-                slugs, fetch_date)
+                (event_id, slug, title, description,
+                end_date, image, new, liquidity,
+                volume, volume24hr, categories, fetch_date)
             VALUES %s
             ON CONFLICT (event_id) DO UPDATE
             SET
-                volume24hr = EXCLUDED.volume24hr,
-                volume1wk = EXCLUDED.volume1wk,
-                volume1mo = EXCLUDED.volume1mo,
-                volume1yr = EXCLUDED.volume1yr,
-                volume = EXCLUDED.volume,
+                slug = EXCLUDED.slug,
+                title = EXCLUDED.title,
+                description = EXCLUDED.description,
+                end_date = EXCLUDED.end_date,
+                image = EXCLUDED.image,
                 new = EXCLUDED.new,
-                featured = EXCLUDED.featured,
                 liquidity = EXCLUDED.liquidity,
+                volume = EXCLUDED.volume,
+                volume24hr = EXCLUDED.volume24hr,
+                categories = EXCLUDED.categories,
                 fetch_date = EXCLUDED.fetch_date
         '''
         
@@ -142,39 +124,24 @@ class Database:
         
         sql = '''
             INSERT INTO markets 
-                (market_id, slug, title, end_date, 
-                liquidity, start_date, image, outcome_yes,
-                outcome_no, volume24hr, volume1wk, volume1mo, 
-                volume1yr, volume, new, featured, 
-                neg_risk, outcome_yes_price, outcome_no_price, one_day_price_change, 
-                one_hour_price_change, one_week_price_change, one_month_price_change, last_trade_price, 
+                (market_id, event_id, slug, question,
+                group_item_title, new, liquidity, volume,
+                volume24hr, outcome_yes_price, outcome_no_price, one_day_price_change,
                 fetch_date)
             VALUES %s
             ON CONFLICT (market_id) DO UPDATE
             SET 
+                event_id = EXCLUDED.event_id,
                 slug = EXCLUDED.slug,
-                title = EXCLUDED.title,
-                end_date = EXCLUDED.end_date,
-                liquidity = EXCLUDED.liquidity,
-                start_date = EXCLUDED.start_date,
-                image = EXCLUDED.image,
-                outcome_yes = EXCLUDED.outcome_yes,
-                outcome_no = EXCLUDED.outcome_no,
-                volume24hr = EXCLUDED.volume24hr,
-                volume1wk = EXCLUDED.volume1wk,
-                volume1mo = EXCLUDED.volume1mo,
-                volume1yr = EXCLUDED.volume1yr,
-                volume = EXCLUDED.volume,
+                question = EXCLUDED.question,
+                group_item_title = EXCLUDED.group_item_title,
                 new = EXCLUDED.new,
-                featured = EXCLUDED.featured,
-                neg_risk = EXCLUDED.neg_risk,
+                liquidity = EXCLUDED.liquidity,
+                volume = EXCLUDED.volume,
+                volume24hr = EXCLUDED.volume24hr,
                 outcome_yes_price = EXCLUDED.outcome_yes_price,
                 outcome_no_price = EXCLUDED.outcome_no_price,
                 one_day_price_change = EXCLUDED.one_day_price_change,
-                one_hour_price_change = EXCLUDED.one_hour_price_change,
-                one_week_price_change = EXCLUDED.one_week_price_change,
-                one_month_price_change = EXCLUDED.one_month_price_change,
-                last_trade_price = EXCLUDED.last_trade_price,
                 fetch_date = EXCLUDED.fetch_date
         '''
         
