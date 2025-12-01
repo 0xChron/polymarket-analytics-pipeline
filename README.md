@@ -75,8 +75,8 @@ Stores individual prediction markets (linked to events via foreign key).
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/0xChron/polymarket-analytics-pipeline.git
-    cd polymarket-analytics-pipeline
+    git clone https://github.com/0xChron/polydash-etl.git
+    cd polydash-etl
     ```
 
 2. **Install dependencies**
@@ -102,7 +102,7 @@ Stores individual prediction markets (linked to events via foreign key).
 ## Project Structure
 
 ```bash
-polymarket-analytics-pipeline/
+polydash-etl/
 ├── .github/
 │   └── workflows/
 │       └── ingest.yml
