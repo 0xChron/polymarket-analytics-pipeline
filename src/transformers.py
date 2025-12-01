@@ -68,6 +68,7 @@ class DataTransformer:
                     outcome_yes_price,
                     outcome_no_price,
                     market.get('oneDayPriceChange', 0),
+                    market.get('image', ''),
                     fetch_date
                 ))
         

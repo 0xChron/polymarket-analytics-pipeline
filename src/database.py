@@ -59,6 +59,7 @@ class Database:
                 outcome_yes_price NUMERIC,
                 outcome_no_price NUMERIC,
                 one_day_price_change NUMERIC,
+                image TEXT,
                 fetch_date TIMESTAMP WITH TIME ZONE
                 )
             ''')
@@ -127,7 +128,7 @@ class Database:
                 (market_id, event_id, slug, question,
                 group_item_title, new, liquidity, volume,
                 volume24hr, outcome_yes_price, outcome_no_price, one_day_price_change,
-                fetch_date)
+                image, fetch_date)
             VALUES %s
             ON CONFLICT (market_id) DO UPDATE
             SET 
@@ -142,6 +143,7 @@ class Database:
                 outcome_yes_price = EXCLUDED.outcome_yes_price,
                 outcome_no_price = EXCLUDED.outcome_no_price,
                 one_day_price_change = EXCLUDED.one_day_price_change,
+                image = EXCLUDED.image,
                 fetch_date = EXCLUDED.fetch_date
         '''
         
